@@ -7,10 +7,10 @@ the resources that Chinese people can access on the Internet will become less an
 This is a set of items for self-rescue, keep the fire for yourself before the door is completely closed.
 
 ## Requirement
-Python 3.7+
-bs4
-pillow
-pyperclip
+* Python 3.7+
+* bs4
+* pillow
+* pyperclip
 
 ## Usage 
 `python AdultMovieManager.py`
