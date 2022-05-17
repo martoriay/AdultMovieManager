@@ -1,0 +1,7 @@
+src/.eggs
+src/.vscode
+src/build
+src/dist
+src/database
+src/test_path
+src/window.spec
