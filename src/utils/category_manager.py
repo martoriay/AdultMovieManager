@@ -86,7 +86,7 @@ class CategoryManager:
             
             for category in categories:
                 cate = Category(category)
-                cate.get_all_movies()
+                cate.get_all_movies_from_json()
                 cate.download_all_resources()
                            
 class Category:
@@ -218,11 +218,11 @@ class Category:
         if set:
             with open(file_name,'w') as f:
                 json.dump(self.movies_dict,f)
-                print("Downloading Completed of %s"%self.en_name)
+                print("Downloading Completed of %s"%self.title)
                 return True
         else:
             if os.path.exists(file_name):
-                print("category %s is Exists."%self.en_name)
+                print("category %s is Exists."%self.title)
                 return True
             return False
 
@@ -261,7 +261,7 @@ class Category:
                 break
             except Exception as e:
                 print("Downloading Faild with error: ",e)
-                time.sleep(60)
+                time.sleep(600)
         try:
             with  open(file_name,'wb') as f:
                 f.write(down_res.content)

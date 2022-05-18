@@ -27,6 +27,7 @@ from utils.search import Search
 from utils.movie import Movie
 from ui.manager_frame import MovieFrame
 from utils.movie_parser import MovieName
+from ui.category_frame import CategoryFrame
 
 
 class MainUI:
@@ -125,6 +126,10 @@ class MainUI:
         notebook=ttk.Notebook(self.app)
         homePage=tk.Frame()
         self.home_page(homePage)
+        
+        cate_page=tk.Frame()
+        self.category_page(cate_page)
+        
         download_list=tk.Frame(height=800)
         self.download_list(download_list)
         managePage=tk.Frame()
@@ -135,6 +140,8 @@ class MainUI:
         self.manage_page(managePage3,"NZ")
         download_movie_detail=tk.Frame()
         self.download_movie(download_movie_detail)
+        
+        notebook.add(cate_page,text="分类浏览")
         notebook.add(homePage,text="首页")
         notebook.add(download_list,text="下载列表")
         notebook.add(download_movie_detail,text="下载详情")
@@ -148,6 +155,10 @@ class MainUI:
         m=MovieFrame(frame,path,flag)
         m.ui()
         return m.frame
+    
+    def category_page(self,frame):
+        c=CategoryFrame(frame)
+        return c.frame
     
     def download_movie(self,frame):
         def download(ety):
