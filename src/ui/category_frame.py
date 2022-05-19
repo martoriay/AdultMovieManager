@@ -10,12 +10,10 @@
 '''
 
 
-
-from sre_constants import ANY_ALL
 import sys,json,subprocess
 import os
 import threading
-from matplotlib.pyplot import show
+
 
 
 import pyperclip
@@ -62,9 +60,11 @@ class CategoryFrame:
         
     def gen_note(self,root,title,categories):
         
-        def show_detail_image(img):
+        def show_detail_image(movie,img):
+            movie=movie[:-4]
             top=Toplevel(width=800,height=538)
             l=Label(top)
+            top.title(movie)
             size=img.size
             
             img=img.resize((size[0]*2,size[1]*2),Image.ANTIALIAS)
@@ -104,10 +104,10 @@ class CategoryFrame:
                         tmp_fr.grid(row=x,column=y)
                         tupian=Image.open(movie_file)
                         size=tupian.size
-                        tupian2=tupian.resize((300,150),Image.ANTIALIAS)
+                        tupian2=tupian.resize((250,140),Image.ANTIALIAS)
                         tupian2=ImageTk.PhotoImage(tupian)
 
-                        btn1=Button(tmp_fr,height=150,width=300,command=partial(show_detail_image,tupian))
+                        btn1=Button(tmp_fr,height=150,width=300,command=partial(show_detail_image,movie,tupian))
                         btn1.configure(image=tupian2)
                         btn1.image=tupian2
                         btn2=Button(tmp_fr,text="下载内容",command=partial(print,"hello,world"))
