@@ -40,6 +40,7 @@ class MainUI:
     result_frame=None
     to_be_download=[]
     
+    
     def __init__(self):
         
         # self.config_data=get_config(self.data['config_path'])
@@ -51,8 +52,16 @@ class MainUI:
         self.file_path=tk.StringVar(value=self.get_config("file_path"))
         self.manager_path=tk.StringVar(value=self.get_config("manager_path"))
         self.engin=Search(self.site_url.get())
+        self.status_bar_()
         self.menu_bar()
         self.note_book()
+        
+    def status_bar_(self):
+        self.status=Frame(self.app,bd=1)
+        self.status.pack(side=BOTTOM,fill=X)
+        self.status_label=Label(self.status,text="Status:")
+        self.status_label.pack(side=LEFT)
+
         
     def search(self,keyword):
         res=self.engin.search(keyword)
@@ -132,13 +141,20 @@ class MainUI:
         
         download_list=tk.Frame(height=800)
         self.download_list(download_list)
+        
+        
         managePage=tk.Frame()
         self.manage_page(managePage,"AF")
         managePage2=tk.Frame()
         self.manage_page(managePage2,"GM")
         managePage3=tk.Frame()
         self.manage_page(managePage3,"NZ")
-        download_movie_detail=tk.Frame()
+        managePage4=tk.Frame()
+        self.manage_page(managePage4,"09")
+        
+        
+        
+        download_movie_detail=tk.Frame()        
         self.download_movie(download_movie_detail)
         
         notebook.add(cate_page,text="分类浏览")
@@ -148,6 +164,7 @@ class MainUI:
         notebook.add(managePage,text="电影A-F")
         notebook.add(managePage2,text="电影G-M")
         notebook.add(managePage3,text="电影N-Z")
+        notebook.add(managePage4,text="电影0-9")
         notebook.pack(fill=tk.BOTH,expand=True)
         
     def manage_page(self,frame,flag):

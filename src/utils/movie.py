@@ -10,7 +10,9 @@
 '''
 
 import requests,json,os,sys
-from bs4 import BeautifulSoup as bs 
+from bs4 import BeautifulSoup as bs
+
+from utils.common import deparser_id 
 
 class Movie:
     headers = {
@@ -27,12 +29,16 @@ class Movie:
                   ]
     
     def __init__(self,id):
-        self.origin_id=id
+        
         self.actress=""
         id=id.lower()
         if '-' in id:
+            self.origin_id = id
             self.id=id.replace('-','00')
-        self.id_parser()
+            self.id_parser()
+        else:
+            self.origin_id = deparser_id(id)
+            self.id=id
         self.content_url = [self.requests_url[0]%self.id,self.requests_url[1]%self.id,self.requests_url[2]%self.id]
         
     def local_info(self,file_path):
@@ -253,6 +259,8 @@ class AllMovieInfo:
         movies=[]
         dir_list=os.listdir(self.file_path)
         for d in dir_list:
+            if '-' not in d:
+                continue
             if os.path.isdir(os.path.join(self.file_path,d)):
                 movies.append(d+'\n')
         try:

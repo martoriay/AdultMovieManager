@@ -13,9 +13,6 @@
 import sys,json,subprocess
 import os
 import threading
-
-
-
 import pyperclip
 sys.path.append(os.path.abspath('./'))
 
@@ -36,6 +33,7 @@ from utils.category_manager import CategoryManager,Category
 
 class CategoryFrame:
     file_path = "/Volumes/Movie/Manager/Categories"
+    manager_path = "/Volumes/Movie/Manager"
     
     def __init__(self,root=None):
         if root == None:
@@ -60,8 +58,23 @@ class CategoryFrame:
         
     def gen_note(self,root,title,categories):
         
+        def download(id):
+            print("Start downloading %s"%id)
+            try:
+                manage_path=self.manager_path
+                # path=os.path.join(manage_path,id)
+                m=Movie(id)
+                mn=MovieName("")
+                mn.down_movie(m,manage_path)
+            except Exception as e:
+                print("Error when downloading %s"%id,e)
+                
+        def subprocess_download(id):
+            trd=threading.Thread(target=download,args=(id,))
+            trd.start()
+        
         def show_detail_image(movie,img):
-            movie=movie[:-4]
+            movie=movie[:-6]
             top=Toplevel(width=800,height=538)
             l=Label(top)
             top.title(movie)
@@ -72,6 +85,7 @@ class CategoryFrame:
             l.configure(image=img)
             l.image=img
             l.pack()
+            Button(top,text="下载电影",command=partial(subprocess_download,movie)).pack()
         
         def show_info(lb,det,title="",page_num=0,scd=None):
             for widget in det.winfo_children():

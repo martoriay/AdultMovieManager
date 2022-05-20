@@ -34,7 +34,7 @@ from utils.movie_parser import MovieName
     
 
 class MovieFrame:
-    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ "
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
     def __init__(self,root=None,file_path="/Volumes/Movie/Manager",flag="AZ"):
         if root==None:
             self.root=Tk()
@@ -220,9 +220,10 @@ class MovieFrame:
                 
             b=Frame(det)
             b.pack()
-            index=lb.curselection()
+            #index=lb.curselection()
+            
             if id=="":
-                id=lb.get(index)
+                id=lb.get(lb.curselection())
                 
             fold=os.path.join(self.file_path,id)
             
@@ -255,12 +256,12 @@ class MovieFrame:
             fr=tk.Frame(root)
             lb=Listbox(fr,width=30,selectmode='single')
             det=Frame(fr)
-            lb.bind('<<ListboxSelect>>',partial(show_info,lb,det,""))
             lb.pack(side=LEFT,fill=Y)
             det.pack(side=LEFT,fill=Y)
             v=sorted(v)
             for vv in v:
                 lb.insert(END,vv)
+            lb.bind('<<ListboxSelect>>',partial(show_info,lb,det,""))
             return fr
         
         
