@@ -6,4 +6,4 @@ src/database
 src/test_path
 src/window.spec
 src/testdown
-*.pyc
+
