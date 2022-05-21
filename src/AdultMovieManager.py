@@ -17,6 +17,7 @@ from tkinter import ttk
 import sys,os,json
 from functools import partial
 import pyperclip
+from ui.javday_frame import JavdayFrame
 
 
 
@@ -152,7 +153,8 @@ class MainUI:
         managePage4=tk.Frame()
         self.manage_page(managePage4,"09")
         
-        
+        javday=tk.Frame()
+        JavdayFrame(javday).ui()
         
         download_movie_detail=tk.Frame()        
         self.download_movie(download_movie_detail)
@@ -165,6 +167,8 @@ class MainUI:
         notebook.add(managePage2,text="电影G-M")
         notebook.add(managePage3,text="电影N-Z")
         notebook.add(managePage4,text="电影0-9")
+        
+        notebook.add(javday,text="Javday")
         notebook.pack(fill=tk.BOTH,expand=True)
         
     def manage_page(self,frame,flag):
