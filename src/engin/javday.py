@@ -22,7 +22,7 @@ from engin.base import Engin
 class Javday(Engin):
     def __init__(self):
         super().__init__('https://javday.tv')
-        self.headers['X-Playback-Session-Id']="7D7C298F-9D13-412A-9550-37D513483C8E"
+        # self.headers['X-Playback-Session-Id']="7D7C298F-9D13-412A-9550-37D513483C8E"
         self.headers['Referer']="https://javday.tv"
         self.engin_path = os.path.join(self.manager_path,'Javday')
         if not os.path.exists(self.engin_path):
@@ -102,8 +102,10 @@ class Javday(Engin):
         if not os.path.exists(path):
             os.mkdir(path)
         failed=[]
-
+        total=len(tss)
+        count=1
         for ts in tss:
+            
             file_name = ts.split('/')[-1]
             file_path_name=os.path.join(path,file_name)
             if os.path.exists(file_path_name):
@@ -114,10 +116,11 @@ class Javday(Engin):
             if res.status_code<400:
                 with open(file_path_name,'wb') as f:
                     f.write(res.content)
-                print("%s downloaded to %s."%(ts,path))
+                print("%d/%d:  %s downloaded to %s."%(count,total,file_name,path))
             else:
                 print("%s download Failed.")
                 failed.append(ts+'\n')
+            count+=1
                 
         failed_path=os.path.join(path,"failed.txt")
         if failed != []:
@@ -131,7 +134,7 @@ class Javday(Engin):
             return True
         
         
-    def multi_download_tss_to(self,tss,path,thread_num=10):
+    def multi_download_tss_to(self,tss,path,thread_num=5):
         tsss=[]
         
         l=len(tss)
@@ -188,8 +191,8 @@ class Javday(Engin):
                     if os.path.exists(ts_file):
                         f.write(open(ts_file,'rb').read())
                     else:
-                        print("%s 丢失，请重新下载")
-                        return
+                        print("%s 丢失，请重新下载"%ts_file)
+                        pass
             print("合并完成")
             
     def clear_ts_files(self,path):
@@ -215,16 +218,21 @@ class Javday(Engin):
             tss = self.get_tss(m8u3,path)
             flag = self.download_tss_to(tss,path)
             count = 5
+            all_complete=True
             while flag==False:
                 flag = self.try_failed_ts(path)
                 count-=1
                 if count ==0:
                     print("Failed in downloading TS files.")
+                    
             try:
                 self.merge_tss(path)
-                self.clear_ts_files(path)
             except Exception as e:
+                all_complete=False
                 print("Error in Merge: ",e)
+                
+            if all_complete:  
+                self.clear_ts_files(path)
                 
                 
     def multi_download_movie(self,id): 
@@ -296,12 +304,13 @@ class Javday(Engin):
                 self.download_single(img_url,path,name)
                      
 if __name__ == '__main__':
-    # try:
-    #     id = sys.argv[1]
-    # except Exception as e:
-    #     print("No id.")
-    #     id = "2wrvUDq9"
+    try:
+        id = sys.argv[1]
+    except Exception as e:
+        print("No id.")
+        id = "2wrvUDq9"
 
     e=Javday()
-    e.get_index_page()
+    # e.get_index_page()
+    e.multi_download_movie(id)
 
