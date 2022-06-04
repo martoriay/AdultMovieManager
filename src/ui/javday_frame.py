@@ -144,9 +144,8 @@ class JavdayFrame(BaseFrame):
             Button(frm,text="下一页",command=partial(self.get_index_page,frm,page_num+1)).grid(row=6,column=3)
         if page_num>=1:
             Button(frm,text="上一页",command=partial(self.get_index_page,frm,page_num-1)).grid(row=6,column=1)
-        Button(frm,text="刷新首页").grid(row=6,column=2)
-        
             
+        Button(frm,text="刷新首页").grid(row=6,column=2)
         self.note.add(frm,text="首页")
         
     def download_movie_by_id(self,id):
@@ -154,10 +153,6 @@ class JavdayFrame(BaseFrame):
         trd=threading.Thread(target=j.multi_download_movie,args=(id,))
         trd.start()
         
-
-        
-    
-
     def ui(self):
         frm=Frame()
         self.get_index_page(frm,0)
@@ -166,6 +161,9 @@ class JavdayFrame(BaseFrame):
         
     def run(self):
         self.root.mainloop()
+        
+        
+    
     
         
 if __name__ == '__main__':

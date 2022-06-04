@@ -13,11 +13,17 @@
 import json
 import sys
 import os
+import pyperclip
 sys.path.append(os.path.abspath('./'))
 import requests
+import time
 from bs4 import BeautifulSoup as bs 
 import threading
 from engin.base import Engin
+import tkinter as tk 
+from tkinter import *
+from tkinter import messagebox
+from functools import partial
 
 class Javday(Engin):
     def __init__(self):
@@ -30,7 +36,7 @@ class Javday(Engin):
             
     def parse_title(self,title):
         res=""
-        title=title.split('/')
+        title=title.split(' ')
         for i in range(1,len(title)-2):
             res+=title[i]
         return res
@@ -39,9 +45,6 @@ class Javday(Engin):
         url=self.base_url+"/videos/"+id
         soup = self.get_soup(url,debug=save)
         content = soup.select('.vcontainer>script')
-        title=soup.select('title')[0].get_text()
-        title=self.parse_title(title)
-        
         
         if content != []:
             content=content[0].get_text()
@@ -55,6 +58,7 @@ class Javday(Engin):
         content = content.split('\n')
         content = [i.strip() for i in content]
         vurl = ""
+        pic=""
         
         for l in content:
             if l.startswith("url"):
@@ -63,12 +67,19 @@ class Javday(Engin):
             elif l.startswith("pic"):
                 pic=l[6:-2]
                 print(pic)
-                
+
         pic_url = self.base_url+pic
         path = os.path.join(self.engin_path,id)
         # 尝试下载电影封面
+        
+        title=soup.select('title')[0].get_text()
+        # pic_title=self.parse_title(title)
+
         try:
-            self.download_single(pic_url,path,title+'.jpg')
+            if pic=="":
+                pass
+            else:
+                self.download_single(pic_url,path,name=title+'.jpg')
         except Exception as e:
             print("Downloading pic error:",e)
                 
@@ -98,7 +109,7 @@ class Javday(Engin):
             f.write(tss_for_write)
         return tss
     
-    def download_tss_to(self,tss,path,index=""):
+    def download_tss_to(self,tss,path,index="0"):
         if not os.path.exists(path):
             os.mkdir(path)
         failed=[]
@@ -112,11 +123,16 @@ class Javday(Engin):
                 print("%s is exist.")
                 continue
             
-            res=requests.get(ts,headers=self.headers)
+            try:
+                res=requests.get(ts,headers=self.headers)
+            except Exception as e:
+                print("file %s failed."%file_name)
+                continue
+            
             if res.status_code<400:
                 with open(file_path_name,'wb') as f:
                     f.write(res.content)
-                print("%d/%d:  %s downloaded to %s."%(count,total,file_name,path))
+                print("Thred:%s -> %d/%d:  %s downloaded to %s."%(index,count,total,file_name,path))
             else:
                 print("%s download Failed.")
                 failed.append(ts+'\n')
@@ -134,7 +150,7 @@ class Javday(Engin):
             return True
         
         
-    def multi_download_tss_to(self,tss,path,thread_num=5):
+    def multi_download_tss_to(self,tss,path,thread_num=10):
         tsss=[]
         
         l=len(tss)
@@ -159,7 +175,7 @@ class Javday(Engin):
         threads=[]
         index=1
         for t in tsss:
-            thread=threading.Thread(target=self.download_tss_to,args=(t,path))
+            thread=threading.Thread(target=self.download_tss_to,args=(t,path,index))
             print("Thread %d start .... "%index)
             index+=1
             threads.append(thread)
@@ -247,15 +263,7 @@ class Javday(Engin):
         m8u3 = self.get_m8u3(id)
         if m8u3 != None:
             tss = self.get_tss(m8u3,path)
-            
             self.multi_download_tss_to(tss,path)
-            
-            # count = 5
-            # while flag==False:
-            #     flag = self.try_failed_ts(path)
-            #     count-=1
-            #     if count ==0:
-            #         print("Failed in downloading TS files.")
             
             try:
                 self.merge_tss(path)
@@ -302,15 +310,114 @@ class Javday(Engin):
                 img_url=self.base_url+img
                 name=v['id']+' '+ v['title']+'.jpg'
                 self.download_single(img_url,path,name)
+                
+    # 获取某个页面所有电影
+    
+    def get_page_movie_list(self,page_url,selector='a.videoBox'):
+        soup=self.get_soup(url=page_url)
+        contents=soup.select(selector)
+        res=[]
+        for c in contents:
+            res.append(c.get('href').split('/')[-2])
+        return res
+            
+            
+def simple_UI(independent=True):
+    e=Javday()
+    
+    root=tk.Tk()
+    root.geometry("800x480")
+    
+    # 单个电影下载
+    frm1=Frame(root)
+    Label(frm1,text="单个电影下载：").pack(side=LEFT)
+    id=tk.StringVar()
+    id_entry=Entry(frm1,textvariable=id)
+    id_entry.pack(side=LEFT)
+    def download():
+        id=id_entry.get()
+        print("start downloading:%s"%id)
+        e.multi_download_movie(id)
+    def thread_download():
+        trd=threading.Thread(target=download)
+        trd.start()
+    Button(frm1,text="立即下载",command=thread_download).pack(side=LEFT)
+    frm1.pack()
+        
+    # 下载电影列表
+    frm2=Frame(root)
+    Label(frm2,text="多个电影下载：").pack(side=LEFT)
+    ids=tk.StringVar()
+    ids_entry=Entry(frm2,textvariable=ids)
+    ids_entry.pack(side=LEFT)
+    def downloads():
+        ids=ids_entry.get()
+        ids=ids.split(' ')
+        l=len(ids)
+        count=1
+        for id in ids:
+            print("####################%d/%d is downloading####################"%(count,l))
+            count+=1
+            def download():
+                print("start downloading:%s"%id)
+                e.multi_download_movie(id)
+            trd=threading.Thread(target=download)
+            trd.start()
+            trd.join()
+    Button(frm2,text="立即下载",command=downloads).pack(side=LEFT)
+    frm2.pack()
+    
+    # 获取页面所有电影
+    frm3=Frame(root)
+    Label(frm3,text="获取页面所有电影列表").pack(side=LEFT)
+    url=tk.StringVar()
+    page_entry=Entry(frm3,textvariable=url)
+    page_entry.pack(side=LEFT)
+    # lst_lb=E(frm3,text="页面电影列表将在这里显示")
+    def get_page_movies():
+        url=page_entry.get()
+        lst=e.get_page_movie_list(url)
+        t=""
+        count=1
+        for m in lst:
+            t+=m+' '
+        pyperclip.copy(t[:-1])
+        messagebox.showinfo("提示","页面的所有电影已拷贝到剪切板")
+    Button(frm3,text="开始获取",command=get_page_movies).pack(side=LEFT)
+    frm3.pack()
+    
+    if independent:
+        root.mainloop()
+    else:
+        return root
+    
                      
 if __name__ == '__main__':
     try:
         id = sys.argv[1]
     except Exception as e:
         print("No id.")
-        id = "2wrvUDq9"
-
+        id = "MSD048"
+        
+    # 下载电影 id
     e=Javday()
+    # e.multi_download_movie(id)
+    
+    # 下载多个电影
+    # ids=['PMC109', 'PMC127', 'PMC130', 'PMX058', 'PMC129', 'PMC132', 'PMC128', 'PMC138', 'PMC131', 'PMC140', 'PMC133', 'PMC142']
+    # for id in ids:
+    #     e.multi_download_movie(id)
+    #     time.sleep(20)
+    simple_UI()
+    # 下载首页
     # e.get_index_page()
-    e.multi_download_movie(id)
+    
+    # 合并电影
+    # e=Javday()
+    # e.merge_tss("/Volumes/Movie/Javday/Pcolle202111")
+    
+    # 获取页面所有电影id
+    # url="https://javday.tv/videos/PMC138/"
+    # res=e.get_page_movie_list(url)
+    # print(res)
 
