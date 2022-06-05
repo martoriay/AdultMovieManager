@@ -10,6 +10,7 @@
 '''
 
 
+from concurrent.futures import thread
 import json
 import sys
 import os
@@ -265,11 +266,15 @@ class Javday(Engin):
             tss = self.get_tss(m8u3,path)
             self.multi_download_tss_to(tss,path)
             
+        def merge_and_clean():
             try:
                 self.merge_tss(path)
                 self.clear_ts_files(path)
             except Exception as e:
                 print("Error in Merge: ",e)
+                
+        trd=threading.Thread(target=merge_and_clean)
+        trd.start()
                 
                 
     def get_index_page(self):
@@ -322,12 +327,12 @@ class Javday(Engin):
         return res
             
             
-def simple_UI(independent=True):
+def simple_UI(root=None, independent=True):
     e=Javday()
-    
-    root=tk.Tk()
-    root.geometry("800x480")
-    
+    if root==None:
+        root=tk.Tk()
+        root.geometry("800x480")
+
     # 单个电影下载
     frm1=Frame(root)
     Label(frm1,text="单个电影下载：").pack(side=LEFT)
@@ -357,6 +362,7 @@ def simple_UI(independent=True):
         count=1
         for id in ids:
             print("####################%d/%d is downloading####################"%(count,l))
+            Label(root,text="%d/%dDownloading %s"%(count,l,id)).pack()
             count+=1
             def download():
                 print("start downloading:%s"%id)
@@ -364,7 +370,12 @@ def simple_UI(independent=True):
             trd=threading.Thread(target=download)
             trd.start()
             trd.join()
-    Button(frm2,text="立即下载",command=downloads).pack(side=LEFT)
+            
+    def thread_downloads():
+        trd=threading.Thread(target=downloads)
+        trd.start()
+        
+    Button(frm2,text="立即下载",command=thread_downloads).pack(side=LEFT)
     frm2.pack()
     
     # 获取页面所有电影
