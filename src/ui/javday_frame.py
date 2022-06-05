@@ -158,7 +158,6 @@ class JavdayFrame(BaseFrame):
         self.get_index_page(frm,0)
         self.get_all_movie()
         
-        
     def run(self):
         self.root.mainloop()
         

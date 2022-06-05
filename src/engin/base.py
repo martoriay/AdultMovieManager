@@ -63,6 +63,20 @@ class Engin:
             except Exception as e:
                 print("Download Single FIle %s Error:"%file_name,e)
                 
+    def parse_url_to_pre_and_file(self,url):
+        url_s=url.split('/')
+        file_name=url_s[-1]
+        url_pre=""
+        for i in range(len(url_s)-1):
+            url_pre+=url_s[i]
+            url_pre+='/'
+        return url_pre,file_name
+            
 
-                
+        
+if __name__ == '__main__':
+    e=Engin('hht')
+    p,f=e.parse_url("http://www.lovecos.net/chinacos/50789.html")
+
+    print(p,f)    
                 
