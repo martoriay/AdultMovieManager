@@ -16,15 +16,25 @@ sys.path.append(os.path.abspath('./'))
 import requests
 from bs4 import BeautifulSoup as bs 
 import threading
+import platform
 
 class Engin:
+    pltfm=platform.platform()
     version = "1.0.0"
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.5 Safari/605.1.15',
         }
-    
     manager_path = "/Volumes/Movie"
-    def __init__(self,base_url):
+    def __init__(self,base_url,engin_name=""):
+        if self.pltfm[0]=='m':
+            self.manager_path = "/Volumes/Movie"
+        elif self.pltfm[0]=='w':
+            self.manager_path = 'Z:'
+        if engin_name!="":
+            self.engin_path=os.path.join(self.manager_path,engin_name)
+        if not os.path.exists(self.engin_path):
+            os.mkdir(self.engin_path)
+        self.engin_name=engin_name
         self.base_url=base_url
         self.detail_url=""
         self.search_url=""
@@ -71,6 +81,18 @@ class Engin:
             url_pre+=url_s[i]
             url_pre+='/'
         return url_pre,file_name
+    
+    def update_database(self,dct):
+        pass
+    
+    def get_content_list(self,url,selector,next=True):
+        if not next:
+            return
+        soup=self.get_soup(url)
+
+        
+        
+        
     
 
             
