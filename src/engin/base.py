@@ -71,12 +71,11 @@ class Engin:
             url_pre+=url_s[i]
             url_pre+='/'
         return url_pre,file_name
+    
+
             
 
         
 if __name__ == '__main__':
     e=Engin('hht')
-    p,f=e.parse_url("http://www.lovecos.net/chinacos/50789.html")
-
-    print(p,f)    
                 

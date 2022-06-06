@@ -12,6 +12,7 @@
 
 from concurrent.futures import thread
 import json
+from posixpath import split
 import sys
 import os
 from tkinter.ttk import Notebook
@@ -42,9 +43,6 @@ class Lovecos(Engin):
         if not os.path.exists(self.database_file):
             self.create_db()
             print("Database lovecos.db created.")
-            
-        self.con=sqlite3.connect(self.database_file)
-
 
         self.categories=[
             "gamecos",
@@ -61,12 +59,12 @@ class Lovecos(Engin):
             pic text,
             saved integer);
         """
-        self.execute(sql)
+        self.single_execute(sql)
         print("Table cosplay created.")
         
     def create_tb(self,name):
         check_sql="SELECT count(*) FROM sqlite_master WHERE type='table' AND name='%s'"%name
-        res=self.execute(check_sql)
+        res=self.single_execute(check_sql)
         if res!=0:
             return 
 
@@ -77,34 +75,19 @@ class Lovecos(Engin):
             pic text,
             saved integer);
         """%name
-        self.execute(sql)
+        self.single_execute(sql)
         self.commit()
         print("Table cosplay created.")
         
-    def execute(self,sql):
-        while True:
-            try:
-                cur=self.con.cursor()
-                cur.execute(sql)
-                return
-            except Exception as e:
-                print("Error and retry in 10 seconds:",e)
-                time.sleep(10)
-                continue
+            
+    def single_execute(self,sql):
+        con=sqlite3.connect(self.database_file)
+        cur=con.cursor()
+        res = cur.execute(sql)
+        con.commit()
+        con.close()
+        return res
         
-    def commit(self):
-        try:
-            self.con.commit()
-            return True
-        except Exception as e:
-            print("Error:",e)
-            return False
-        
-    def close(self):
-        self.con.close()
-        
-    def continue_execute(self,cur,sql):
-        cur.execute(sql)
         
     def from_single_soup_to_dict(self,pic):
         a=pic.select('.p_title>a')[0]
@@ -131,7 +114,7 @@ class Lovecos(Engin):
     def exist_or_insert_single(self,dct,table='cosplay'):
         sql="INSERT or IGNORE into %s values ( '%s','%s','%s',%d);"%(table,dct['id'],dct['title'],dct['pic'],dct['saved'])
         try:
-            self.execute(sql)
+            self.single_execute(sql)
             print(dct['id']," have been inserted to table")
         except Exception as e:
             print("Error when insert %s:"%dct[id],e)
@@ -142,14 +125,6 @@ class Lovecos(Engin):
         for i in range(len(dcts)):
             dct=dcts[i]
             self.exist_or_insert_single(dct,table)
-        #     tmp="('%s','%s','%s',%d)"%(dct['id'],dct['title'],dct['pic'],dct['saved'])
-        #     if i!=len(dcts):
-        #         tmp+=','
-        #     else:
-        #         tmp+=';'
-        #     values+=tmp 
-        # sql="INSERT or IGNORE into cosplay VALUES %s"%values 
-        # self.execute(sql)
         flag=self.commit()
         if flag==True:
             print("All dcts have been inserted into the cosplay table.")
@@ -157,13 +132,8 @@ class Lovecos(Engin):
         
 
         time.sleep(5)
-        try:
-            self.con.close()
-        except Exception as e:
-            print("Closing connect error:",e)
         
         try:
-            self.con=sqlite3.connect(self.database_file)
             self.exist_or_insert_multi(dcts,table)
         except Exception as e:
             print("Error when reconnect to the database:",e)
@@ -249,21 +219,34 @@ class Lovecos(Engin):
         saved+=pics_num
         sql="UPDATE %s SET saved='%d' WHERE id='%s'"%(table,saved,id)
         
-        self.execute(sql)
-        self.commit()
-        print("%s database UPDATED"%id)
+        def update_database():
+            try:
+                con=sqlite3.connect(self.database_file)
+                cur=con.cursor()
+                cur.execute(sql)
+                print("%s database UPDATED"%id)
+                con.commit()
+                con.close()
+            except Exception as e:
+                print("Error: ",e)
+                time.sleep(2)
+                update_database()
+        
+        update_database()
+        
+        
+
+        
         
     
     def get_detail_pic(self,url,path):
         pages_soup=self.get_soup(url).select('.page>a')
         
-        pages=[]
+        pages=[url]
         pre,_=self.parse_url_to_pre_and_file(url)
         if len(pages_soup)!=0:
             for p in pages_soup:
                 pages.append(pre+p.get('href'))
-        else:
-            pages.append(url)
             
         pics=[]
         for p in pages:
@@ -283,10 +266,19 @@ class Lovecos(Engin):
         
     def get_all_pics_from_database(self,table):
         sql="select * from %s where saved=0"%table
-        cur=self.con.cursor()
+        con=sqlite3.connect(self.database_file)
+        cur=con.cursor()
         res=cur.execute(sql)
+        records=[]
         for r in res:
+            records.append(r)
+        con.commit()
+        con.close()
+        for r in records:
             self.create_fold_and_download_pic(r,table)
+        
+        
+        return True
    
 
 if __name__ == '__main__':
@@ -297,7 +289,14 @@ if __name__ == '__main__':
     # l.get_all_pics_from_database('cosplay')
     # pics=l.get_detail_pic("http://www.lovecos.net/chinacos/50786.html","")
     # print(pics)
-    l.get_all_pics_from_database('cosplay')
+    while True:
+        try:
+            flag=l.get_all_pics_from_database('cosplay')
+            if flag:
+                break
+        except Exception as e:
+            print("Error: ",e)
+            
 
          
     
