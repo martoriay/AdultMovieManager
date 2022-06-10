@@ -275,7 +275,7 @@ if __name__ == '__main__':
     
     finish=False
         
-    while finish:
+    while finish==False:
         try:
             finish=l.get_all_pics_from_database('cosplay')      
         except Exception as e:
