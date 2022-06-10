@@ -418,7 +418,8 @@ if __name__ == '__main__':
     # x.get_all_cosplayer_in_page()
     # x.update_all_cosplayer_collections()
     # 死循环单线程
-    while True:
+    finish=False
+    while finish==False:
         try:
             finish=x.single_download_pic()
             if finish:

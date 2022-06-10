@@ -9,26 +9,16 @@
 @Title   :   
 '''
 
-
-from concurrent.futures import thread
-import json
-from posixpath import split
 import sys
 import os
-from tkinter.ttk import Notebook
-from unicodedata import category
-import pyperclip
 sys.path.append(os.path.abspath('./'))
-import requests
 import time
-from bs4 import BeautifulSoup as bs 
-import threading
-from threading import Lock
+
 from engin.base import Engin
-import tkinter as tk 
-from tkinter import *
-from tkinter import messagebox
-from functools import partial
+# import tkinter as tk 
+# from tkinter import *
+# from tkinter import messagebox
+
 import sqlite3
 
 class Lovecos(Engin):
@@ -172,25 +162,25 @@ class Lovecos(Engin):
             self.insert_page_list_into_database(page_url,table='cosplay')
 
             
-    def ui(self,root=None,single=True):
-        if root==None:
-            root=tk.Tk()
-            root.geometry('800x480')
-        note=Notebook(root)
-        frm_game=Frame(note)
-        note.add(frm_game,text="Game")
-        frm_china=Frame(note)
-        note.add(frm_china,text="China")
-        frm_japan=Frame(note)
-        note.add(frm_japan,text="Japan")
-        frm_hot=Frame(note)
-        note.add(frm_hot,text="Hot")
+    # def ui(self,root=None,single=True):
+    #     if root==None:
+    #         root=tk.Tk()
+    #         root.geometry('800x480')
+    #     note=Notebook(root)
+    #     frm_game=Frame(note)
+    #     note.add(frm_game,text="Game")
+    #     frm_china=Frame(note)
+    #     note.add(frm_china,text="China")
+    #     frm_japan=Frame(note)
+    #     note.add(frm_japan,text="Japan")
+    #     frm_hot=Frame(note)
+    #     note.add(frm_hot,text="Hot")
 
-        note.pack()
-        if single:
-            root.mainloop()
-        else:
-            return note
+    #     note.pack()
+    #     if single:
+    #         root.mainloop()
+    #     else:
+    #         return note
         
     # 从数据库中下载所有封面图，并建立文件夹
     
@@ -234,11 +224,6 @@ class Lovecos(Engin):
         
         update_database()
         
-        
-
-        
-        
-    
     def get_detail_pic(self,url,path):
         pages_soup=self.get_soup(url).select('.page>a')
         
@@ -276,8 +261,6 @@ class Lovecos(Engin):
         con.close()
         for r in records:
             self.create_fold_and_download_pic(r,table)
-        
-        
         return True
    
 
@@ -289,14 +272,18 @@ if __name__ == '__main__':
     # l.get_all_pics_from_database('cosplay')
     # pics=l.get_detail_pic("http://www.lovecos.net/chinacos/50786.html","")
     # print(pics)
-    while True:
+    
+    finish=False
+        
+    while finish:
         try:
-            flag=l.get_all_pics_from_database('cosplay')
-            if flag:
-                break
+            finish=l.get_all_pics_from_database('cosplay')      
         except Exception as e:
             print("Error: ",e)
+            time.sleep(20)
+
             
+    
 
          
     

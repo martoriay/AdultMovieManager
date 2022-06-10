@@ -11,7 +11,7 @@
 
 import sys
 import os
-from wsgiref.util import request_uri
+
 sys.path.append(os.path.abspath('./'))
 import requests
 from bs4 import BeautifulSoup as bs 
