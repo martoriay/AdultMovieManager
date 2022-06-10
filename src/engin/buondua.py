@@ -10,16 +10,14 @@
 '''
 
 
-from concurrent.futures import ThreadPoolExecutor, thread
+from concurrent.futures import ThreadPoolExecutor
 import json
 from posixpath import split
 import sys
 
 import os
-from tkinter.ttk import Notebook
-from unicodedata import category
 
-import pyperclip
+from unicodedata import category
 sys.path.append(os.path.abspath('./'))
 import requests
 import time
@@ -27,9 +25,9 @@ from bs4 import BeautifulSoup as bs
 import threading
 from threading import Lock
 from engin.base import Engin
-import tkinter as tk 
-from tkinter import *
-from tkinter import messagebox
+# import tkinter as tk 
+# from tkinter import *
+# from tkinter import messagebox
 from functools import partial
 import sqlite3
 from sqlite3 import connect
@@ -49,12 +47,6 @@ class Buodua(Engin):
             print("Table exist.")
             
         self.db_lock=Lock()
-            
-        # con=connect(self.database_file)
-        # cur=con.cursor()
-        # cur.execute('drop table pics')
-        # con.commit()
-        # con.close()
         
         try:
             self.create_pic_tb()
@@ -424,7 +416,7 @@ if __name__ == '__main__':
         except Exception as e:
             print("Error: ", e)
             time.sleep(20)
-            
+
         
     # 线程池
     # x.thread_pool_download()
