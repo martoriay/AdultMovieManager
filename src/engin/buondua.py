@@ -313,20 +313,26 @@ class Buodua(Engin):
 
             
             
-    def multi_download_pic(self):
+    def single_download_pic(self):
         sql="select * from pics where saved=0"
         # thread_pool=ThreadPoolExecutor(10)
+        finish=False
+
         con=connect(self.database_file)
         cur=con.cursor()
         res=cur.execute(sql)
         result=[]
         count=1000
+        
         for r in res:
             count-=1
             result.append(r)
             if count==0:
                 break
         con.close()
+        
+        if len(result)<1000:
+            finish=True
 
         count=20
         sqls=[]
@@ -348,6 +354,8 @@ class Buodua(Engin):
                 con.commit()
                 con.close()
                 sqls=[]
+        
+        return finish
                 
                 
     def tread_download(self,result):
@@ -412,7 +420,11 @@ if __name__ == '__main__':
     # 死循环单线程
     while True:
         try:
-            x.multi_download_pic()
+            finish=x.single_download_pic()
+            if finish:
+                break
+            else:
+                continue
         except Exception as e:
             print("Error: ", e)
             time.sleep(20)
