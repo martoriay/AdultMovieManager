@@ -1,0 +1,72 @@
+{
+    "xinmeitulu": {
+        "name": "xinmeitulu",
+        "url": "https://www.xinmeitulu.com",
+        "rules": [{
+            "name": "category",
+            "selector": "#menu-main>li",
+            "attr": "id",
+            "check_attr": "",
+            "check_value": "",
+            "attrs": [{
+                "name": "title",
+                "selector": "a",
+                "attr": "text",
+                "check_attr": "",
+                "check_value": ""
+            }, {
+                "name": "href",
+                "selector": "a",
+                "attr": "href",
+                "check_attr": "",
+                "check_value": ""
+            }]
+        }, {
+            "name": "collection",
+            "selector": "article.container>div>figure",
+            "attr": "",
+            "check_attr": "",
+            "check_value": "",
+            "attrs": [{
+                "name": "post",
+                "selector": "a>img",
+                "attr": "src",
+                "check_attr": "",
+                "check_value": ""
+            }, {
+                "name": "title",
+                "selector": "",
+                "attr": "text",
+                "check_attr": "",
+                "check_value": ""
+            }, {
+                "name": "href",
+                "selector": "a",
+                "attr": "href",
+                "check_attr": "",
+                "check_value": ""
+            }]
+        }, {
+            "name": "item",
+            "selector": "div.container",
+            "attr": "text",
+            "check_attr": "",
+            "check_value": "",
+            "attrs": [{
+                "name": "href",
+                "selector": "div>figure>a",
+                "attr": "href",
+                "check_attr": "",
+                "check_value": ""
+            }, {
+                "name": "name",
+                "selector": "div>figure>a",
+                "attr": "text",
+                "check_attr": "",
+                "check_value": ""
+            }]
+        }],
+        "category": [],
+        "levels": ["category", "collection", "item"]
+    }
+}

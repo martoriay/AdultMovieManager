@@ -33,7 +33,7 @@ import sqlite3
 
 class Lovecos(Engin):
     def __init__(self):
-        self.engin_path='/Volume/Movie/'
+        self.engin_path='/Volumes/Movie/'
         super().__init__('http://www.lovecos.net')
         # self.headers['X-Playback-Session-Id']="7D7C298F-9D13-412A-9550-37D513483C8E"
         self.engin_path = os.path.join(self.manager_path,'Lovecos')

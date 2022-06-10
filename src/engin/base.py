@@ -32,6 +32,8 @@ class Engin:
             self.manager_path = 'Z:'
         if engin_name!="":
             self.engin_path=os.path.join(self.manager_path,engin_name)
+        else:
+            self.engin_path=self.manager_path
         if not os.path.exists(self.engin_path):
             os.mkdir(self.engin_path)
         self.engin_name=engin_name

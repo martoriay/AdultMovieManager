@@ -1,4 +1,6 @@
 import re
+import requests
+from bs4 import BeautifulSoup as bs
 
 def id_parser(id):
     if id.startswith('dfe'):
@@ -44,6 +46,56 @@ def deparser_id(id):
     title=id[:start].upper()
     num=id[start+2:]
     return title+'-'+num
+
+def get_soup(url,debug=False,encode=""):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.5 Safari/605.1.15',
+        }
+    html=requests.get(url,headers=headers)
+    if debug:
+        print("Response:",html.status_code)
+    if encode=="":
+        html.encoding = html.apparent_encoding
+    else:
+        html.encoding = encode
+    soup = bs(html.text,features="html.parser")
+    return soup
+
+def ui_clean(ui):
+    for w in ui.winfo_children():
+        w.pack_forget()
+        
+def get_attrs_from_soup(soup,selector,attrs):
+    elements=soup.select(selector)
+    res=[]
+    for e in elements:
+        dct={}
+        for attr in attrs:
+            if attr=='text':
+                t=e.get_text()
+            else:
+                t=e.get(attr)
+            dct[attr]=t 
+        res.append(dct)
+    return res
+        
+def get_attr_from_soup(soup,selector,attr):
+    elements=soup.select(selector)
+    res=[]
+    for e in elements:
+        if attr=='text':
+            t=e.get_text()
+        else:
+            t=e.get(attr)
+        res.append(t)
+    return res
+
+def get_info_by_rule(soup,rule):
+    elements=soup.select(rule["selector"])
+    
+
+    
+
 
 if __name__ == '__main__':
     print(deparser_id("ipx00080"))

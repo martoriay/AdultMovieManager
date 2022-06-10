@@ -18,7 +18,7 @@ import sys
 import os
 from tkinter.ttk import Notebook
 from unicodedata import category
-from matplotlib import collections
+
 import pyperclip
 sys.path.append(os.path.abspath('./'))
 import requests
@@ -33,6 +33,7 @@ from tkinter import messagebox
 from functools import partial
 import sqlite3
 from sqlite3 import connect
+from concurrent.futures import ThreadPoolExecutor
 
 class Buodua(Engin):
     def __init__(self):
@@ -47,6 +48,14 @@ class Buodua(Engin):
         except:
             print("Table exist.")
             
+        self.db_lock=Lock()
+            
+        # con=connect(self.database_file)
+        # cur=con.cursor()
+        # cur.execute('drop table pics')
+        # con.commit()
+        # con.close()
+        
         try:
             self.create_pic_tb()
         except:
@@ -241,35 +250,44 @@ class Buodua(Engin):
         
         href=self.base_url+res[1]
         post=res[2]
-        total_pic_num=int(title.split('(')[-1].split(' ')[0])
+        try:
+            total_pic_num=int(title.split('(')[-1].split(' ')[0])
+        except Exception as e:
+            print("Error :",e)
+            total_pic_num=60
         total_page=total_pic_num//20
         if total_pic_num%20!=0:
             total_page+=1
-        next=2
+
         start=1
         con=connect(self.database_file)
         cur=con.cursor()
 
         path=os.path.join(cate_path,title)
         if not os.path.exists(path):
-            os.mkdir(path)
+            try:
+                os.mkdir(path)
+            except Exception as e:
+                print("Error: ",e)
+                return 
         
         self.download_single(post,path,'post.jpg')
         soup=self.get_soup(href)
-
+        self.count=1
         def get_pic_from_soup(soup):
             print("############# start to get pic from page %d#############"%start)
             imgs=soup.select('.article-fulltext>p>img')
-            count=1
+            
             for img in imgs:
                 url=img.get('data-src')
-                sql="INSERT or IGNORE into pics values ('%s','%s','%s',%d);"%(url,path,str(count)+'.jpg',0)
+                sql="INSERT or IGNORE into pics values ('%s','%s','%s',%d);"%(url,path,str(self.count)+'.jpg',0)
+                self.count+=1
                 cur.execute(sql)
             con.commit()
             
         get_pic_from_soup(soup)
         
-        while start<=next:
+        while start<=total_page:
             start+=1
             url=href+'?page='+str(start)
             soup=self.get_soup(url)
@@ -285,11 +303,21 @@ class Buodua(Engin):
             results.append(r)
         con.close()
         
+        l=len(results)
+        count=1
+        
         for r in results:
-            print(r)
+            print("%d/%d ---> %s "%(count,l,r))
+            count+=1
             self.get_detail_pics(r)
             title=r[0]
             sql="UPDATE collection SET saved=1 WHERE title='%s'"%(title)
+            con=connect(self.database_file)
+            cur=con.cursor()
+            cur.execute(sql)
+            con.commit()
+            con.close()
+            
 
             
             
@@ -299,8 +327,18 @@ class Buodua(Engin):
         con=connect(self.database_file)
         cur=con.cursor()
         res=cur.execute(sql)
-        count=100
+        result=[]
+        count=1000
         for r in res:
+            count-=1
+            result.append(r)
+            if count==0:
+                break
+        con.close()
+
+        count=20
+        sqls=[]
+        for r in result:
             print(r)
             count-=1
             url=r[0]
@@ -308,15 +346,86 @@ class Buodua(Engin):
             name=r[2]
             self.download_single(url,path,name)
             sql="UPDATE pics SET saved=1 WHERE url='%s'"%(url)
-            cur.execute(sql)
+            sqls.append(sql)
             if count==0:
-                count=100
+                count=20
+                con=connect(self.database_file)
+                cur=con.cursor()
+                for sql in sqls:
+                    cur.execute(sql)
                 con.commit()
+                con.close()
+                sqls=[]
+                
+                
+    def tread_download(self,result):
+        print("Start donwload!!")
+        sqls=[]
+        for r in result:
+            print(r)
+            count-=1
+            url=r[0]
+            path=r[1]
+            name=r[2]
+            self.download_single(url,path,name)
+            sql="UPDATE pics SET saved=1 WHERE url='%s'"%(url)
+            sqls.append(sql)
+        
+        self.db_lock.acquire()
+        con=connect(self.database_file)
+        cur=con.cursor()
+        for sql in sqls:
+            cur.execute(sql)
+        con.commit()
         con.close()
+        self.db_lock.release()
+        print("Tread %d ----->  Database Updated.")
+    
+    def thread_pool_download(self,pool=6,t=200):
+        sql="select * from pics where saved=0"
+        # thread_pool=ThreadPoolExecutor(10)
+        con=connect(self.database_file)
+        cur=con.cursor()
+        res=cur.execute(sql)
+        all_res=[]
+        result=[]
+        count=100
+        for r in res:
+            count-=1
+            result.append(r)
+            if count==0:
+                all_res.append(result)
+                if t==0:
+                    break
+                else:
+                    t-=1
+                    count=100
+                    result=[]
+
+        con.close()
+        executor=ThreadPoolExecutor(pool)
+        print("Start create all ")
+        # [executor.submit(self.thread_download,res) for res in all_res]
+        executor.map(self.tread_download,all_res)
+        print("所有任务分配完成")
+        time.sleep(350000)
+                
+    
+                
    
 if __name__ == '__main__':
     x=Buodua()
-    x.get_all_cosplayer_in_page()
-    x.update_all_cosplayer_collections()
-    x.get_all_detail_pics()
-    x.multi_download_pic()
+    # x.get_all_cosplayer_in_page()
+    # x.update_all_cosplayer_collections()
+    # 死循环单线程
+    while True:
+        try:
+            x.multi_download_pic()
+        except Exception as e:
+            print("Error: ", e)
+            time.sleep(20)
+            
+        
+    # 线程池
+    # x.thread_pool_download()
+    # time.sleep(360000)
