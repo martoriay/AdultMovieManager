@@ -337,7 +337,7 @@ class Buodua(Engin):
         count=20
         sqls=[]
         for r in result:
-            print(r)
+            # print(r)
             count-=1
             url=r[0]
             path=r[1]
@@ -419,7 +419,7 @@ if __name__ == '__main__':
     # x.update_all_cosplayer_collections()
     # 死循环单线程
     finish=False
-    while finish==False:
+    while True:
         try:
             finish=x.single_download_pic()
             if finish:
