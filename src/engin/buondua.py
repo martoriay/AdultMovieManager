@@ -359,8 +359,8 @@ class Buodua(Engin):
                 con.commit()
                 con.close()
                 sqls=[]
-            for k,v in log:
-                print(k,v)
+        for k,v in log:
+            print(k,v)
         return finish
                 
                 
