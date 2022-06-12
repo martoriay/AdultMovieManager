@@ -331,17 +331,19 @@ class Buodua(Engin):
                 break
         con.close()
         
-        if len(result)<1000:
+        if len(result)<990:
             finish=True
 
-        count=20
+        count=50
         sqls=[]
+        log=""
         for r in result:
             # print(r)
             count-=1
             url=r[0]
             path=r[1]
             name=r[2]
+            log+=name+'\n'
             self.download_single(url,path,name)
             sql="UPDATE pics SET saved=1 WHERE url='%s'"%(url)
             sqls.append(sql)
@@ -354,7 +356,7 @@ class Buodua(Engin):
                 con.commit()
                 con.close()
                 sqls=[]
-        
+            print(log)
         return finish
                 
                 
