@@ -331,27 +331,26 @@ class Buodua(Engin):
                 break
         con.close()
         
-        if len(result)<990:
+        l=len(result)
+        
+        if l<990:
             finish=True
 
-        count=50
+        count=0
         sqls=[]
-        log={}
+
+        
         for r in result:
             # print(r)
-            count-=1
+            count+=1
             url=r[0]
             path=r[1]
             name=r[2]
-            if path not in log:
-                log[path]=1
-            else:
-                log[path]+=1
+            print("%d / %d --> "%(count,l),end="  ")
             self.download_single(url,path,name)
             sql="UPDATE pics SET saved=1 WHERE url='%s'"%(url)
             sqls.append(sql)
-            if count==0:
-                count=20
+            if count%50==0:
                 con=connect(self.database_file)
                 cur=con.cursor()
                 for sql in sqls:
@@ -359,8 +358,8 @@ class Buodua(Engin):
                 con.commit()
                 con.close()
                 sqls=[]
-        for k,v in log:
-            print(k,v)
+        # for k,v in log:
+        #     print(k,v)
         return finish
                 
                 
