@@ -128,9 +128,6 @@ class Xnxx:
         
     def update_pages(self):
         res=self.db.select_db('xnxxpage','visited',0)
-        dcts=[]
-        count=0
-        update_dcts=[]
         for r in res:
             print(r)
             url=r[0]
@@ -144,15 +141,7 @@ class Xnxx:
                 'value':1
             }
             self.db.update_dcts_xnxx('xnxxpage',[update_dct])
-            # count+=1
-            # update_dcts.append(update_dct)
-            # if count%2==0:
-            #     self.db.update_dcts('xnxxpage',update_dcts)
-            #     update_dcts=[]
-            #     break
-            break
 
-        
     def get_video_from_soup(self,soup,category):
         videos_div=soup.select('.mozaique>div')
         dcts=[]
@@ -200,11 +189,6 @@ class Xnxx:
             }
             dcts.append(dct)
         return dcts
-
-
-            
-            
-        
 
 if __name__ == '__main__':
     x=Xnxx()
