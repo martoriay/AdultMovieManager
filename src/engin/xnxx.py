@@ -10,28 +10,16 @@
 '''
 
 
-from concurrent.futures import ThreadPoolExecutor
+
 import json
 import sys
 
 import os
-from pexpect import ExceptionPexpect
+
 
 sys.path.append(os.path.abspath('./'))
-import requests
-import time
-from bs4 import BeautifulSoup as bs 
-import threading
-from threading import Lock
-from engin.base import Engin
-from functools import partial
-from concurrent.futures import ThreadPoolExecutor
 from utils.common import get_soup
-import sqlalchemy,json
-from sqlalchemy import BIGINT, VARCHAR, Column, Integer, BOOLEAN, bindparam,create_engine
-from sqlalchemy import text as sqltext
-from sqlalchemy import insert,select,update,delete,Table,MetaData,Text
-from database.db import EngineDB 
+
 
 class Xnxx:
     def __init__(self):
