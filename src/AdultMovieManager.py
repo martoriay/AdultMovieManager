@@ -63,7 +63,6 @@ class MainUI:
         self.status_label=Label(self.status,text="Status:")
         self.status_label.pack(side=LEFT)
 
-        
     def search(self,keyword):
         res=self.engin.search(keyword)
         return res
@@ -291,8 +290,6 @@ class MainUI:
         Button(frame,text="清空列表",command=clear_list).pack()
         self.download_lb.pack(fill=BOTH)
         
-
-
 if __name__ == "__main__":
     mui=MainUI()
     mui.run()

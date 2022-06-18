@@ -12,12 +12,10 @@
 
 from concurrent.futures import ThreadPoolExecutor
 import json
-from posixpath import split
 import sys
 
 import os
 
-from unicodedata import category
 sys.path.append(os.path.abspath('./'))
 import requests
 import time

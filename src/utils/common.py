@@ -47,11 +47,20 @@ def deparser_id(id):
     num=id[start+2:]
     return title+'-'+num
 
-def get_soup(url,debug=False,encode=""):
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.5 Safari/605.1.15',
-        }
-    html=requests.get(url,headers=headers)
+def get_soup(url,debug=False,encode="",headers="",proxy=False):
+    if headers=="":
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.5 Safari/605.1.15',
+            }
+    proxies={
+        'http':'http://127.0.0.1:7890',
+        'https':'http://127.0.0.1:7890'
+    }
+    if proxy:
+        html=requests.get(url,headers=headers,proxies=proxies)
+    else:
+        html=requests.get(url,headers=headers)
+        
     if debug:
         print("Response:",html.status_code)
     if encode=="":
