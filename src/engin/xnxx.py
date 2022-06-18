@@ -15,14 +15,17 @@ import json
 import sys
 
 import os
-
+import time
 
 sys.path.append(os.path.abspath('./'))
 from utils.common import get_soup
 from database.db import EngineDB
+from urllib import parse
 
 
 class Xnxx:
+    manage_path="/Volumes/Movie/Xnxx"
+    
     def __init__(self):
         self.base_url="https://www.xnxx.com"
         self.test_url="https://www.xnxx.com/video-15bwr32d/_jk"
@@ -33,9 +36,9 @@ class Xnxx:
     
     def initiate(self):
         soup=get_soup(self.base_url,proxy=True)
-        print(soup)
+
         ass=soup.select('ul.side-cat-list>li>a')
-        print(ass)
+
         hrefs={}
         for a in ass:
             href=a.get('href')
@@ -117,19 +120,26 @@ class Xnxx:
         
     def update_pages(self):
         res=self.db.select_db('xnxxpage','visited',0)
+        l=len(res)
+        count=0
         for r in res:
-            print(r)
+            count+=1
+            print("%d/%d"%(count,l),end="-->")
             url=r[0]
             category=r[2]
-            soup=get_soup(url,proxy=True)
-            dcts=self.get_video_from_soup(soup,category)
-            self.db.insert_dcts('xnxx',dcts)
-            print("Page ||%s --> %s || Info have insert into Xnxx"%(category,url))
-            update_dct={
-                'key':url,
-                'value':1
-            }
-            self.db.update_dcts_xnxx('xnxxpage',[update_dct])
+            print("Page: %s --> %s "%(parse.unquote(category),parse.unquote(url)),end=" --> ")
+            try:
+                soup=get_soup(url,proxy=True)
+                dcts=self.get_video_from_soup(soup,category)
+                self.db.insert_dcts('xnxx',dcts)
+                update_dct={
+                    'key':url,
+                    'value':1
+                }
+                self.db.update_dcts_xnxx('xnxxpage',[update_dct])
+                print("Success.")
+            except Exception as e:
+                print("Failed:%s",e)
 
     def get_video_from_soup(self,soup,category):
         videos_div=soup.select('.mozaique>div')
@@ -145,7 +155,7 @@ class Xnxx:
             try:
                 uploader=video_div.select('.uploader>a')[0].get('href')
             except Exception as e:
-                print("Error to get uploader:",e)
+                # print("Error to get uploader:",e)
                 uploader="unknown"
             undera=video_div.select('.thumb-under>p>a')[0]
             title=undera.get('title')
@@ -168,7 +178,7 @@ class Xnxx:
                 'related':'',
                 'category':category,
                 'author':uploader,
-                'time':t,
+                'duration':0,
                 'visitors':visitor,
                 'upvote':'0',
                 'visited':0,
@@ -178,13 +188,160 @@ class Xnxx:
             }
             dcts.append(dct)
         return dcts
+    
+    def get_detail_info_video(self,res):
+        
+        vid=res[10]
+        url=res[11]
+        result={'key':vid,'visited':1}
+        full_url=self.base_url+url
+        try:
+            category=parse.unquote(res[5])
+        except:
+            category=res[5]
+        
+        path=category.split('/')[-1]
+        
+        category_path=os.path.join(self.manage_path,path)
+        if not os.path.exists(category_path):
+            os.mkdir(category_path)
+            
+        folder=os.path.join(category_path,vid)
+        result['folder']=folder
+        # post=res[1]
+        print("Task: %s --> %s"%(res[0],path),end='   |||  ')
+        soup=get_soup(full_url,proxy=True)
+        
+        try:
+            result['superfluous']=soup.select('.rating-box.value')[0].get_text()
+        except:
+            result['superfluous']="Unknow"
+        
+        try:
+            result['upvote']=soup.select('.vote-action-good')[0].get_text()
+        except:
+            result['upvote']='Unknow'
+        
+        try:
+            result['visitors']=soup.select('span.metadata')[0].get_text().split('-')[-1].strip()
+        except:
+            result['visitors']='Unknow'
+            
+        ss=soup.select('#video-player-bg>script')
+        if len(ss)!=6:
+            return
+        related=ss[0].get_text()
+        
+        relateds_arr=self.get_related(related)
+        video=ss[3].get_text()
+        video_dct=self.get_video(video)
+        metas=soup.select('meta')
+        meta_dct=self.get_meta(metas)
+        
+        result.update(video_dct)
+        result.update(meta_dct)
+        result['related']=json.dumps(relateds_arr)
+        
+        return result
+        
+    def get_meta(self,metas):
+        dct={}
+        for meta in metas:
+            n=meta.get('name')
+            p=meta.get('property')
+            if n=='keywords':
+                tag=meta.get('content')
+                dct['tag']=tag
+            if p=="og:duration":
+                d=meta.get('content')
+                try:
+                    d=int(d)
+                except:
+                    d=0
+                dct['duration']=d
+        return dct
 
+    def get_video(self,video_text):
+        text=video_text.split('\n')
+        text=[t.strip() for t in text]
+        video_hight=""
+        video_hls=""
+        video_thumb=""
+        video_slides=""
+        video_id=""
+        
+        for t in text:
+            if t.startswith("html5player.setVideoUrlHigh"):
+                video_hight=t[29:-3]
+            if t.startswith("html5player.setVideoHLS"):
+                video_hls=t[25:-3]
+            if t.startswith("html5player.setThumbUrl"):
+                video_thumb=t[25:-3]
+            if t.startswith("html5player.setThumbSlideBig"):
+                video_slides=t[30:-3]
+            if t.startswith("var html5player = new HTML5Player"):
+                video_id=t[49:-3]
+            
+        dct={
+            'mp4':video_hight,
+            'm3u8':video_hls,
+            'thumb':video_thumb,
+            'slides':video_slides,
+            'id':video_id
+        }
+        return dct 
+    
+    def get_related(self,related_text):
+        start=related_text.index('[')
+        end=related_text.index(']')
+        tmp=related_text[start:end+1]
+        try:
+            related=json.loads(tmp)
+        except:
+            return []
+        relateds=[]
+        for r in related:
+            relateds.append(self.parse_related(r))
+        
+        return relateds
+
+    def parse_related(self,r):
+        dct={
+            'id':r['id'],
+            'url':r['u'],
+            'post':r['i'],
+        }
+        return dct
+        
+    def update_xnxx(self,visited=0):
+        result=self.db.select_db('xnxx','visited',visited)
+        l=len(result)
+        count=0
+        for res in result:
+            count+=1
+            print("%d/%d"%(count,l),end=":  ")
+            try:
+                r=self.get_detail_info_video(res)
+            except Exception as e:
+                print("Error: %s"%e)
+                print("RES:",res)
+                time.sleep(2)
+                continue
+            try:
+                self.db.update_dcts_xnxx_detail('xnxx',r)
+                print("Success.")
+            except Exception as e:
+                print("Failed:%s",e)
+                continue
+        
 if __name__ == '__main__':
     x=Xnxx()
-    # x.get_all_pages()
-    x.update_pages()
-    
-
-
-
+    if len(sys.argv)>1:
+        arg=sys.argv[1]
+    else:
+        arg=""
         
+    if arg=="":
+        x.update_pages()
+    else:
+        x.update_xnxx(visited=0)
