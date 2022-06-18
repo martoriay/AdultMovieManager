@@ -19,6 +19,7 @@ import os
 
 sys.path.append(os.path.abspath('./'))
 from utils.common import get_soup
+from database.db import EngineDB
 
 
 class Xnxx:
