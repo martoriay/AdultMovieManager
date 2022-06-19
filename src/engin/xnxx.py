@@ -11,10 +11,12 @@
 
 
 
+from concurrent.futures import thread
 import json
 import sys
 
 import os
+import threading
 import time
 
 sys.path.append(os.path.abspath('./'))
@@ -118,10 +120,22 @@ class Xnxx:
         self.db.insert_dcts('xnxxpage',dcts)
         print("%s | % s   Pages have been iserted to Database."%(category,title))
         
-    def update_pages(self):
+    def update_pages(self,start=5000,length=1000):
         res=self.db.select_db('xnxxpage','visited',0)
         l=len(res)
+        if l<=start:
+            print("All page updated.")
+            return
+        
+        if start+length>=l:
+            end=l 
+        else:
+            end=start+length
+            
+        res=res[start:end]
+        l=len(res)
         count=0
+        
         for r in res:
             count+=1
             print("%d/%d"%(count,l),end="-->")
@@ -209,7 +223,7 @@ class Xnxx:
         folder=os.path.join(category_path,vid)
         result['folder']=folder
         # post=res[1]
-        print("Task: %s --> %s"%(res[0],path),end='   |||  ')
+        print("%s --> %s"%(res[0],path),end=' | ')
         soup=get_soup(full_url,proxy=True)
         
         try:
@@ -313,8 +327,39 @@ class Xnxx:
         }
         return dct
         
-    def update_xnxx(self,visited=0):
+    def update_xnxx(self,visited=0,start=5000,length=2000):
         result=self.db.select_db('xnxx','visited',visited)
+        l=len(result)
+        
+        if start>=l:
+            print("Alll xnxx updated.")
+        if start+length>l:
+            end=l
+        else:
+            end=start+length
+            
+        result=result[start:end]
+        self.update_xnxx_by_res(result)
+        # l=len(result)
+        # count=0
+        # for res in result:
+        #     count+=1
+        #     print("%d/%d"%(count,l),end=":  ")
+        #     try:
+        #         r=self.get_detail_info_video(res)
+        #     except Exception as e:
+        #         print("Error: %s"%e)
+        #         print("RES:",res)
+        #         time.sleep(2)
+        #         continue
+        #     try:
+        #         self.db.update_dcts_xnxx_detail('xnxx',r)
+        #         print("Success.")
+        #     except Exception as e:
+        #         print("Failed:%s",e)
+        #         continue
+            
+    def update_xnxx_by_res(self,result,thread_index=0):
         l=len(result)
         count=0
         for res in result:
@@ -329,10 +374,31 @@ class Xnxx:
                 continue
             try:
                 self.db.update_dcts_xnxx_detail('xnxx',r)
-                print("Success.")
+                print("Success@Thread%d"%thread_index)
             except Exception as e:
-                print("Failed:%s",e)
+                print("Failed:%s"%e)
                 continue
+    
+    def multi_update_xnxx(self,visited=0,worker=5):
+        result=self.db.select_db('xnxx','visited',visited)
+        l=len(result)
+        points=[round(i/worker*l) for i in range(worker)]
+        thrds=[]
+        for i in range(worker-1):
+            thrds.append(threading.Thread(target=self.update_xnxx_by_res,args=(result[points[i]:points[i+1]],i+1)))
+        thrds.append(threading.Thread(target=self.update_xnxx_by_res,args=(result[points[-1]:],worker)))
+        
+        for t in thrds:
+            t.start()
+            
+        for t in thrds:
+            t.join()
+            
+    #TODO: 下载图片
+    #TODO: 下载视频
+    #TODO： 
+    def update_detail(self):
+        pass
         
 if __name__ == '__main__':
     x=Xnxx()
@@ -342,6 +408,13 @@ if __name__ == '__main__':
         arg=""
         
     if arg=="":
-        x.update_pages()
+        x.update_pages(start=5000)
+    elif arg=='multi' or arg=='m':
+        try:
+            num=int(sys.argv[2])
+        except:
+            num=5
+
+        x.multi_update_xnxx(worker=num)
     else:
         x.update_xnxx(visited=0)

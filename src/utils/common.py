@@ -1,4 +1,4 @@
-import re
+import re,os,sys
 import requests
 from bs4 import BeautifulSoup as bs
 
@@ -102,6 +102,64 @@ def get_attr_from_soup(soup,selector,attr):
 def get_info_by_rule(soup,rule):
     elements=soup.select(rule["selector"])
     
+    
+def download_single(url,path,name="",headers="",proxy=True,debug=False):
+    if headers=="":
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.5 Safari/605.1.15',
+            }
+    proxies={
+        'http':'http://127.0.0.1:7890',
+        'https':'http://127.0.0.1:7890'
+    }
+    if name == "":
+        file_name = url.split('/')[-1]
+    else:
+        file_name = name
+    file_name = os.path.join(path,file_name)
+    if os.path.exists(file_name):
+        if debug:
+            print("%s is exists."%file_name)
+    else:
+        if proxy:
+            down_res=requests.get(url,headers=headers,proxies=proxies)
+        else:
+            down_res=requests.get(url,headers=headers)
+            
+        c=down_res.status_code
+        if c>=400:
+            print("Didnt get the content with code %d"%c,url,file_name)
+            return 
+        
+        try:
+            with open(file_name,'wb') as f:
+                f.write(down_res.content)
+            if debug:
+                print("%s downloaded."%file_name)
+        except Exception as e:
+            print("Download Single FIle %s Error:"%file_name,e)
+            
+def divide_len_by_worker(length,worker):
+    pointers=[round(i/worker*length) for i in range(worker)]
+    res=[]
+    for i in range(worker):
+        if i==worker-1:
+            res.append([pointers[-1],length])
+            break
+        else:
+            start=pointers[i]
+            end=pointers[i+1]
+            res.append([start,end])
+    return res
+
+def parser_url(url):
+    urls=url.split('/')
+    name=urls.pop(-1)
+    res=''
+    for u in urls:
+        res+=u+'/'
+    return res,name
+        
 
     
 
