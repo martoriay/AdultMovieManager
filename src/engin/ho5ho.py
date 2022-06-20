@@ -32,6 +32,7 @@ class Ho5ho:
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.5 Safari/605.1.15',
             'referer':"https://www.ho5ho.com"
             }
+    
     def __init__(self,debug=False):
         if not os.path.exists(self.manage_path):
             os.mkdir(self.manage_path)
@@ -64,8 +65,6 @@ class Ho5ho:
             print("Page %d inserted to database."%(i))
             
     def get_all_pages(self,worker=5):
-        
-
         def parser_name(name,index):
             try:
                 base=int(name[:-4])
@@ -116,43 +115,47 @@ class Ho5ho:
                     soup_c=get_soup(url,proxy=True)
                     pics=soup_c.select('#single-pager>option')
                     page_num=len(pics)//2
-                    pic=soup_c.select('#image-0')[0]
+                    try:
+                        pic=soup_c.select('#image-0')[0]
+                    except Exception as e:
+                        print("Error when geting image-0:",e)
+                        continue
                     pic_url=pic.get('data-src')
                     url_path,name=parser_url(pic_url)
-                    print("Thread-%d@Downloading<%d pages->"%(index,page_num),end="")
+                    
                     for i in range(1,page_num+1):
-                        print("|",end="")
                         try:
                             file_name=parser_name(name,i)
+                            u=url_path+file_name
                         except Exception as e:
                             print("Error:",e,name,i)
                             break
-                        u=url_path+file_name
                         try:
                             download_single(u,chapter_path,name=file_name,headers=self.headers)
                         except Exception as e:
                             print("Error :",e,end="!!!")
                             break
+
                 dct={
                     'key':r_url,
                     'visited':1
                 }
                 
                 self.db.update_dcts_href_visited('ho5ho_book',[dct])
-                print('Database updated.')
-                    
+                print("%d/%d@Thread-%d:Downloaded"%(count,l,index),'--> Database updated.')
+
         res=self.db.select_db('ho5ho_book','visited',0)
         pointers=divide_len_by_worker(len(res),worker)
         thrds=[]
         for i in range(worker):
             thrds.append(threading.Thread(target=get_pages_from_res,args=(res[pointers[i][0]:pointers[i][1]],i)))
+
         for t in thrds:
             t.start()
+        
         for t in thrds:
             t.join()
-
-
-        
+   
 if __name__ == '__main__':
     w=Ho5ho(debug=False)
     if len(sys.argv)==2:

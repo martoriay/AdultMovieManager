@@ -120,6 +120,7 @@ def download_single(url,path,name="",headers="",proxy=True,debug=False):
     if os.path.exists(file_name):
         if debug:
             print("%s is exists."%file_name)
+        return 201
     else:
         if proxy:
             down_res=requests.get(url,headers=headers,proxies=proxies)
@@ -129,15 +130,18 @@ def download_single(url,path,name="",headers="",proxy=True,debug=False):
         c=down_res.status_code
         if c>=400:
             print("Didnt get the content with code %d"%c,url,file_name)
-            return 
+            return c 
         
         try:
             with open(file_name,'wb') as f:
                 f.write(down_res.content)
             if debug:
                 print("%s downloaded."%file_name)
+            return 200
+        
         except Exception as e:
             print("Download Single FIle %s Error:"%file_name,e)
+            return 400
             
 def divide_len_by_worker(length,worker):
     pointers=[round(i/worker*length) for i in range(worker)]
